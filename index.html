@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Tracker Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'theme-dark-bg': '#111827',      // Dark Charcoal
+                        'theme-dark-surface': '#1f2937',    // Lighter dark for cards
+                        'theme-violet': '#8b5cf6',        // Vibrant Violet accent
+                        'theme-violet-hover': '#7c3aed',  // Darker Violet for hover
+                        'theme-text-light': '#FFFFFF',      // Pure white for dark mode
+                        'theme-text-secondary': '#E5E7EB',  // Lighter, less grey for secondary text
+                        'theme-border': '#374151',        // Subtle border color
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .toggle-checkbox:checked { right: 0; border-color: #8b5cf6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #8b5cf6; }
+        .fade-out { opacity: 0; transition: opacity 0.5s ease-out; }
+        /* Custom scrollbar for webkit browsers */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #a0aec0;
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+        }
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        body {
+            
+            background-image: url('/static/financial1.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+            position: relative;
+            z-index: 0; 
+            opacity:100;
+        }
+        
+        
+        body::before {
+            content: "";
+            position: fixed; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* Light theme overlay */
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
+            z-index: -1;
+            transition: background 0.3s ease-in-out;
+        }
+
+        
+        html.dark body::before {
+            background: linear-gradient(to right, rgba(91, 103, 129, 0.9), rgba(17, 24, 39, 0.6), rgba(114, 119, 128, 0.9));
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-black dark:bg-theme-dark-bg dark:text-theme-text-light transition-colors duration-300">
+    <button id="theme-toggle" type="button" class="fixed top-4 right-4 text-black dark:text-theme-text-light bg-gray-200 dark:bg-theme-dark-surface hover:bg-gray-300 dark:hover:bg-theme-border focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 z-20">
+        <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
+        <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+    </button>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <nav class="flex justify-between items-center mb-8 bg-theme-violet p-4 rounded-xl shadow-lg">
+            <div class="flex items-center gap-8">
+                <a href="/dashboard" class="text-2xl font-extrabold text-white">Expense Tracker</a>
+                <div class="hidden md:flex items-center gap-4">
+                    <a href="/dashboard" class="text-white font-semibold py-2 px-3 rounded-lg bg-white/20 hover:bg-white/30">Dashboard</a>
+                    <a href="/reports" class="text-white font-semibold py-2 px-3 rounded-lg hover:bg-white/30">Reports</a>
+                    <button id="set-budget-btn" class="text-white font-semibold py-2 px-3 rounded-lg hover:bg-white/30">Set Budget</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hidden sm:inline text-theme-text-secondary text-sm">Welcome, <span class="font-semibold">{{ user }}</span>!</span>
+                
+                <a href="/logout" class="bg-white text-theme-violet font-semibold py-2 px-5 rounded-lg hover:bg-gray-100 transition-transform transform hover:-translate-y-0.5">Logout</a>
+            </div>
+        </nav>
+
+        <div id="flash-container" class="mb-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 rounded-md 
+                        {% if category == 'success' %} bg-green-100 border border-green-400 text-green-700 dark:bg-green-900/30 dark:border-green-600 dark:text-green-200
+                        {% elif category == 'error' %} bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/30 dark:border-red-600 dark:text-red-200
+                        {% else %} bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-600 dark:text-yellow-200 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        </div>
+
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="md:col-span-1 flex flex-col gap-8">
+                <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border h-fit">
+                    <h2 class="text-2xl font-semibold mb-4 text-black dark:text-theme-text-light">Add New Expense</h2>
+                    <form action="/add" method="post" id="add-expense-form">
+                        <div class="mb-4">
+                            <label for="date" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Date</label>
+                            <input type="date" id="date" name="date" value="{{ today_date }}" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="tag-button" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Tag</label>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative w-full">
+                                    <input type="hidden" name="tag" id="selected-tag-input" required>
+                                    <button type="button" id="tag-button" aria-haspopup="listbox" aria-expanded="false" class="relative w-full cursor-default rounded-md border border-gray-300 dark:border-theme-border bg-white dark:bg-theme-dark-surface py-2 pl-3 pr-10 text-left shadow-sm focus:border-theme-violet focus:outline-none focus:ring-1 focus:ring-theme-violet sm:text-sm">
+                                        <span class="block truncate" id="selected-tag-text">Select a tag</span>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 01-1.06 1.06L10 4.81 7.03 7.78a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 0110 3zm-3.72 9.53a.75.75 0 011.06 0L10 15.19l2.97-2.97a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 010-1.06z" clip-rule="evenodd" /></svg>
+                                        </span>
+                                    </button>
+                                    <div id="tag-dropdown" class="absolute z-10 mt-1 hidden w-full rounded-md bg-white/95 dark:bg-theme-dark-surface/95 backdrop-blur-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                        <ul id="tag-list" class="max-h-60 overflow-auto rounded-md py-1 text-base sm:text-sm" tabindex="-1" role="listbox">
+                                            </ul>
+                                    </div>
+                                </div>
+                                <button type="button" id="add-tag-btn" class="bg-theme-violet text-white p-2 rounded-md hover:bg-theme-violet-hover h-9 w-9 flex-shrink-0">➕</button>
+                            </div>
+                            <div id="new-tag-container" class="hidden mt-2">
+                                <div class="flex gap-2">
+                                    <input type="text" id="new-tag-name" placeholder="New tag name" class="block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm">
+                                    <button type="button" id="save-tag-btn" class="bg-emerald-600 text-white px-3 rounded-md hover:bg-emerald-700">✓</button>
+                                    <button type="button" id="cancel-tag-btn" class="bg-gray-500 text-white px-3 rounded-md hover:bg-gray-600">×</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="description" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Description</label>
+                            <input type="text" id="description" name="description" placeholder="e.g., Dinner with friends" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="amount" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Total Amount (₹)</label>
+                            <input type="number" id="amount" name="amount" step="0.01" placeholder="e.g., 100.00" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-medium text-black dark:text-theme-text-secondary">Split this expense?</span>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="is_split" id="is_split_toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                <label for="is_split_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-theme-border cursor-pointer"></label>
+                            </div>
+                        </div>
+                        <div id="split_fields" class="hidden mb-4 p-4 bg-gray-50 dark:bg-theme-dark-bg rounded-md border dark:border-theme-border">
+                            <div id="split-list" class="space-y-3">
+                                </div>
+                            <button type="button" id="add-person-btn" class="mt-4 w-full text-theme-violet text-sm font-semibold hover:underline">Add Person</button>
+                        </div>
+                        <button type="submit" class="w-full bg-theme-violet text-white py-2 px-4 rounded-md hover:bg-theme-violet-hover">Add Expense</button>
+                    </form>
+                </div>
+
+                <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                    <div id="debts-header" class="flex justify-between items-center cursor-pointer">
+                        <h2 class="text-2xl font-semibold text-black dark:text-theme-text-light">Outstanding Debts</h2>
+                        <svg id="debts-arrow" class="h-6 w-6 transition-transform text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    <div id="debts-list-container" class="hidden mt-4">
+                        <ul class="space-y-3">
+                            {% set ns = namespace(found_owed=false) %}
+                            {% for expense in expenses %}
+                                {% for r in expense.receivables %}
+                                    {% if not r.is_paid %}
+                                        {% set ns.found_owed = true %}
+                                        <li class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-theme-border">
+                                            <div>
+                                                <p class="text-black dark:text-theme-text-secondary">{{ r.person_name|capitalize }} - <span class="font-semibold text-yellow-500">₹{{ "%.2f"|format(r.amount) }}</span></p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ expense.date }} &bull; {{ expense.tag|capitalize }}</p>
+                                            </div>
+                                            <form action="{{ url_for('mark_receivable_paid', receivable_id=r.id) }}" method="post" class="inline">
+                                                <button type="submit" class="text-theme-violet hover:underline text-xs font-semibold whitespace-nowrap">(Mark Paid)</button>
+                                            </form>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {% if not ns.found_owed %}
+                                <li>
+                                   <p class="text-sm text-gray-500 dark:text-gray-400">No outstanding debts. Good job!</p>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+           <div class="md:col-span-2 flex flex-col gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                    <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Your Total Expenses</h3>
+                        <p class="text-3xl font-bold text-red-500">₹{{ "%.2f"|format(total) }}</p>
+                    </div>
+                    <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Money Owed to You</h3>
+                        <p class="text-3xl font-bold text-green-500">₹{{ "%.2f"|format(total_owed) }}</p>
+                    </div>
+                    <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Budget</h3>
+                        {% if budget_data.budget_obj %}
+                        <p class="text-3xl font-bold text-blue-500">₹{{ "%.2f"|format(budget_data.budget_obj.amount) }}</p>
+                        {% else %}
+                        <p class="text-xl font-bold text-gray-500">Not Set</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md flex flex-col border border-gray-200 dark:border-theme-border">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold dark:text-white">Your Expenses</h2>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scrollbar pr-2" style="max-height: 450px;">
+                        <table class="w-full text-sm text-left" id="expenses-table">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-3 py-3">Date</th>
+                                    <th scope="col" class="px-3 py-3">Description</th>
+                                    <th scope="col" class="px-3 py-3">Your Share</th>
+                                    <th scope="col" class="px-3 py-3">Split Info</th>
+                                    <th scope="col" class="px-3 py-3 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-theme-dark-surface divide-y divide-gray-200 dark:divide-theme-border">
+                                {% for expense in expenses %}
+                                <tr class="border-b dark:border-theme-border expense-row">
+                                    <td class="px-3 py-4 whitespace-nowrap">{{ expense.date }}</td>
+                                    <td class="px-3 py-4">
+                                        <div class="font-semibold">{{ expense.description }}</div>
+                                        <span class="mt-1 inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300 expense-tag">
+                                            {{ expense.tag|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-4 font-bold expense-amount">₹{{ "%.2f"|format(expense.own_amount) }}</td>
+                                    <td class="px-3 py-4 text-gray-500 dark:text-gray-400">
+                                        {% if expense.receivables %}
+                                            <div>Total: ₹{{ "%.2f"|format(expense.total_amount) }}</div>
+                                            {% for r in expense.receivables %}
+                                                <div class="mt-1 text-xs {% if r.is_paid %}text-green-500 line-through{% else %}text-yellow-500{% endif %}">
+                                                    <span>{{ r.person_name|capitalize }} owes you ₹{{ "%.2f"|format(r.amount) }}</span>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span>-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3 py-4 whitespace-nowrap text-center">
+                                        <button type="button" class="edit-expense-btn text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 text-lg no-underline" data-expense-id="{{ expense.id }}">✏️</button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="px-3 py-4 text-center text-gray-500">No expenses recorded yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                     <form action="/upload" method="post" enctype="multipart/form-data" id="csv-upload-form" class="mt-auto pt-6">
+                        <input type="file" id="csv_file" name="csv_file" accept=".csv" class="hidden" required>
+                        <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                            Wanna upload your expenses by a csv file?
+                            <label for="csv_file" class="text-theme-violet dark:text-indigo-400 hover:underline cursor-pointer font-semibold">
+                                Click here
+                            </label>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div id="edit-modal" class="hidden opacity-0 fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="edit-modal-content">
+            <h2 class="text-2xl font-semibold mb-6 text-black dark:text-theme-text-light">Edit Expense</h2>
+            <form id="edit-expense-form">
+                <input type="hidden" id="edit-expense-id" name="expense_id">
+                
+                <div class="mb-4">
+                    <label for="edit-date" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Date</label>
+                    <input type="date" id="edit-date" name="date" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="edit-tag" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Tag</label>
+                    <select name="tag" id="edit-tag" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                        </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="edit-description" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Description</label>
+                    <input type="text" id="edit-description" name="description" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="edit-amount" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Total Amount (₹)</label>
+                    <input type="number" id="edit-amount" name="amount" step="0.01" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                </div>
+
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm font-medium text-black dark:text-theme-text-secondary">Split this expense?</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="is_split" id="edit-is-split-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="edit-is-split-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-theme-border cursor-pointer"></label>
+                    </div>
+                </div>
+
+                <div id="edit-split-fields" class="hidden mb-4 p-4 bg-gray-50 dark:bg-theme-dark-bg rounded-md border dark:border-theme-border">
+                    <div id="edit-split-list" class="space-y-3">
+                        </div>
+                    <button type="button" id="edit-add-person-btn" class="mt-4 w-full text-theme-violet text-sm font-semibold hover:underline">Add Person</button>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <button type="button" id="delete-expense-btn" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">Delete</button>
+                    <div class="flex gap-4">
+                        <button type="button" id="cancel-edit-btn" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
+                        <button type="submit" class="bg-theme-violet text-white py-2 px-4 rounded-md hover:bg-theme-violet-hover">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Set Budget Modal -->
+    <div id="budget-modal" class="hidden opacity-0 fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="budget-modal-content">
+            <h2 class="text-2xl font-semibold mb-6 text-black dark:text-theme-text-light">Set Your Budget</h2>
+            <form action="/set_budget" method="post" id="budget-form">
+                <div class="mb-4">
+                    <label for="budget_amount" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Budget Amount (₹)</label>
+                    <input type="number" id="budget_amount" name="budget_amount" step="0.01" placeholder="e.g., 5000.00" value="{{ budget_data.budget_obj.amount if budget_data.budget_obj else '' }}" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-black dark:text-theme-text-secondary">Period</label>
+                    <div class="mt-2 flex gap-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio text-theme-violet" name="budget_period" value="monthly" {% if not budget_data.budget_obj or budget_data.budget_obj.period == 'monthly' %}checked{% endif %}>
+                            <span class="ml-2">Monthly</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio text-theme-violet" name="budget_period" value="weekly" {% if budget_data.budget_obj and budget_data.budget_obj.period == 'weekly' %}checked{% endif %}>
+                            <span class="ml-2">Weekly</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mt-6">
+                    <button type="button" id="remove-budget-btn" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">Remove</button>
+                    <div class="flex gap-4">
+                        <button type="button" id="cancel-budget-btn" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
+                        <button type="submit" class="bg-theme-violet text-white py-2 px-4 rounded-md hover:bg-theme-violet-hover">Save Budget</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script id="available-tags-data" type="application/json">
+        {{ available_tags|tojson|safe }}
+    </script>
+
+    <script>
+        // THEME TOGGLE SCRIPT
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleButton = document.getElementById('theme-toggle');
+
+        const setTheme = (isDark) => {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleLightIcon.classList.add('hidden');
+                themeToggleDarkIcon.classList.remove('hidden');
+                localStorage.setItem('color-theme', 'light');
+            }
+        };
+
+        const savedTheme = localStorage.getItem('color-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            setTheme(true);
+        } else {
+            setTheme(false);
+        }
+
+        themeToggleButton.addEventListener('click', () => {
+            setTheme(!document.documentElement.classList.contains('dark'));
+        });
+
+
+        // DASHBOARD SCRIPT
+        document.addEventListener('DOMContentLoaded', () => {
+            let availableTags = [];
+            try {
+                const tagsDataEl = document.getElementById('available-tags-data');
+                if (tagsDataEl && tagsDataEl.textContent) {
+                    availableTags = JSON.parse(tagsDataEl.textContent.trim());
+                }
+            } catch (e) {
+                console.error("Could not parse tags data, defaulting to empty array.", e);
+            }
+            
+            let expensePieChart = null;
+
+            // --- Flash Message Logic ---
+            const flashContainer = document.getElementById('flash-container');
+            function createFlashMessage(message, category) {
+                const div = document.createElement('div');
+                div.classList.add('dynamic-flash');
+                let classes = 'p-4 rounded-md mb-4 ';
+                if (category === 'success') {
+                    classes += 'bg-green-100 border border-green-400 text-green-700 dark:bg-green-900/30 dark:border-green-600 dark:text-green-200';
+                } else {
+                    classes += 'bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/30 dark:border-red-600 dark:text-red-200';
+                }
+                div.className = classes;
+                div.textContent = message;
+                
+                const dynamicMessages = flashContainer.querySelectorAll('.dynamic-flash');
+                dynamicMessages.forEach(msg => msg.remove());
+                flashContainer.appendChild(div);
+                
+                setTimeout(() => {
+                    div.classList.add('fade-out');
+                    setTimeout(() => div.remove(), 500);
+                }, 5000);
+            }
+
+            // --- Custom Tag Dropdown Logic ---
+            const tagButton = document.getElementById('tag-button');
+            const tagDropdown = document.getElementById('tag-dropdown');
+            const tagList = document.getElementById('tag-list');
+            const selectedTagText = document.getElementById('selected-tag-text');
+            const selectedTagInput = document.getElementById('selected-tag-input');
+            
+            function renderTagList() {
+                tagList.innerHTML = '';
+                if (availableTags.length === 0) {
+                     tagList.innerHTML = `<li class="text-gray-500 px-4 py-2">No tags available.</li>`;
+                     return;
+                }
+                availableTags.forEach(tag => {
+                    const li = document.createElement('li');
+                    li.className = 'text-black dark:text-theme-text-secondary cursor-default select-none relative py-2 px-4 hover:bg-theme-violet hover:text-white';
+                    li.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-normal block truncate tag-option" data-value="${tag}">${tag.charAt(0).toUpperCase() + tag.slice(1)}</span>
+                            <button type="button" data-tag-name="${tag}" class="delete-tag-btn ml-3 text-red-500 hover:text-white font-bold text-lg">×</button>
+                        </div>
+                    `;
+                    tagList.appendChild(li);
+                });
+            }
+
+            function setInitialTag() {
+                if (availableTags.length > 0) {
+                    const firstTag = availableTags[0];
+                    selectedTagText.textContent = firstTag.charAt(0).toUpperCase() + firstTag.slice(1);
+                    selectedTagInput.value = firstTag;
+                } else {
+                    selectedTagText.textContent = 'No tags available';
+                    selectedTagInput.value = '';
+                }
+            }
+            
+            tagButton.addEventListener('click', () => {
+                const isHidden = tagDropdown.classList.toggle('hidden');
+                tagButton.setAttribute('aria-expanded', String(!isHidden));
+            });
+
+            tagList.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-tag-btn')) {
+                    e.stopPropagation();
+                    const tagName = e.target.dataset.tagName;
+                    if (confirm(`Are you sure you want to delete the tag "${tagName}"? This cannot be undone.`)) {
+                         try {
+                            const response = await fetch('/tags/delete', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tag_name: tagName })
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                availableTags = result.tags;
+                                renderTagList();
+                                 if (selectedTagInput.value === tagName) {
+                                    setInitialTag();
+                                }
+                                createFlashMessage(result.message, 'success');
+                            } else {
+                                createFlashMessage(result.message, 'error');
+                            }
+                        } catch (error) {
+                            createFlashMessage('A network error occurred while deleting the tag.', 'error');
+                        }
+                    }
+                } else {
+                    const targetLi = e.target.closest('li');
+                    const tagOption = targetLi ? targetLi.querySelector('.tag-option') : null;
+                    if (tagOption) {
+                        const selectedValue = tagOption.dataset.value;
+                        selectedTagText.textContent = tagOption.textContent;
+                        selectedTagInput.value = selectedValue;
+                        tagDropdown.classList.add('hidden');
+                        tagButton.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!tagButton.contains(e.target) && !tagDropdown.contains(e.target)) {
+                    tagDropdown.classList.add('hidden');
+                    tagButton.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // --- Add New Tag Input Logic ---
+            const addTagBtn = document.getElementById('add-tag-btn');
+            const newTagContainer = document.getElementById('new-tag-container');
+            const newTagNameInput = document.getElementById('new-tag-name');
+            const saveTagBtn = document.getElementById('save-tag-btn');
+            const cancelTagBtn = document.getElementById('cancel-tag-btn');
+            
+            addTagBtn.addEventListener('click', () => newTagContainer.classList.remove('hidden') || newTagNameInput.focus());
+            cancelTagBtn.addEventListener('click', () => (newTagContainer.classList.add('hidden'), newTagNameInput.value = ''));
+
+            saveTagBtn.addEventListener('click', async () => {
+                const newTagName = newTagNameInput.value.trim();
+                if (newTagName === '') return;
+                try {
+                    const response = await fetch('/tags/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tag_name: newTagName })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        availableTags = result.tags;
+                        renderTagList();
+                        selectedTagInput.value = newTagName.toLowerCase();
+                        selectedTagText.textContent = newTagName.charAt(0).toUpperCase() + newTagName.slice(1);
+                        createFlashMessage(result.message, 'success');
+                        newTagContainer.classList.add('hidden');
+                        newTagNameInput.value = '';
+                    } else {
+                        createFlashMessage(result.message, 'error');
+                    }
+                } catch (error) {
+                    createFlashMessage('A network error occurred while adding the tag.', 'error');
+                }
+            });
+            
+            
+            // --- CSV Auto-Upload Logic ---
+            const csvFileInput = document.getElementById('csv_file');
+            const csvUploadForm = document.getElementById('csv-upload-form');
+            if(csvFileInput && csvUploadForm) {
+                csvFileInput.addEventListener('change', () => {
+                    if(csvFileInput.files.length > 0) {
+                        csvUploadForm.submit();
+                    }
+                });
+            }
+                                
+            // --- Multi-Split Logic ---
+            function createSplitRow(name = '', share = '') {
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 items-center';
+                div.innerHTML = `
+                    <input type="text" name="split_names[]" placeholder="Person's Name" class="block w-full px-3 py-2 bg-white dark:bg-theme-dark-bg border border-gray-300 dark:border-theme-border rounded-md shadow-sm" value="${name}" required>
+                    <input type="number" name="split_shares[]" step="0.01" placeholder="Share (₹)" class="block w-full px-3 py-2 bg-white dark:bg-theme-dark-bg border border-gray-300 dark:border-theme-border rounded-md shadow-sm" value="${share}" required>
+                    <button type="button" class="remove-person-btn text-red-500 font-bold text-lg">×</button>
+                `;
+                div.querySelector('.remove-person-btn').addEventListener('click', () => div.remove());
+                return div;
+            }
+            
+            const splitToggle = document.getElementById('is_split_toggle');
+            const splitFields = document.getElementById('split_fields');
+            const splitList = document.getElementById('split-list');
+            const addPersonBtn = document.getElementById('add-person-btn');
+
+            splitToggle.addEventListener('change', () => {
+                splitFields.classList.toggle('hidden', !splitToggle.checked);
+                if (splitToggle.checked && splitList.children.length === 0) {
+                    splitList.appendChild(createSplitRow());
+                } else if (!splitToggle.checked) {
+                    splitList.innerHTML = '';
+                }
+            });
+            addPersonBtn.addEventListener('click', () => {
+                splitList.appendChild(createSplitRow());
+            });
+            
+            
+            // --- Edit Modal Logic ---
+            const editModal = document.getElementById('edit-modal');
+            const editModalContent = document.getElementById('edit-modal-content');
+            const editExpenseForm = document.getElementById('edit-expense-form');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const deleteExpenseBtn = document.getElementById('delete-expense-btn');
+            const editSplitToggle = document.getElementById('edit-is-split-toggle');
+            const editSplitFields = document.getElementById('edit-split-fields');
+            const editTagSelect = document.getElementById('edit-tag');
+            const editSplitList = document.getElementById('edit-split-list');
+            const editAddPersonBtn = document.getElementById('edit-add-person-btn');
+
+            function openEditModal() {
+                editModal.classList.remove('hidden');
+                setTimeout(() => {
+                    editModal.classList.remove('opacity-0');
+                    editModalContent.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+            function closeEditModal() {
+                 editModalContent.classList.add('scale-95', 'opacity-0');
+                 editModal.classList.add('opacity-0');
+                 setTimeout(() => {
+                    editModal.classList.add('hidden');
+                 }, 300);
+            }
+
+            document.querySelectorAll('.edit-expense-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const expenseId = e.currentTarget.dataset.expenseId;
+                    
+                    const response = await fetch(`/expense/get/${expenseId}`);
+                    if (!response.ok) {
+                        createFlashMessage('Could not fetch expense details.', 'error');
+                        return;
+                    }
+                    const data = await response.json();
+
+                    document.getElementById('edit-expense-id').value = data.id;
+                    document.getElementById('edit-date').value = data.date;
+                    document.getElementById('edit-description').value = data.description;
+                    document.getElementById('edit-amount').value = data.total_amount;
+                    
+                    editTagSelect.innerHTML = '';
+                    availableTags.forEach(tag => {
+                        const option = document.createElement('option');
+                        option.value = tag;
+                        option.textContent = tag.charAt(0).toUpperCase() + tag.slice(1);
+                        if (tag === data.tag) option.selected = true;
+                        editTagSelect.appendChild(option);
+                    });
+                    
+                    editSplitToggle.checked = data.is_split;
+                    editSplitFields.classList.toggle('hidden', !data.is_split);
+                    editSplitList.innerHTML = '';
+                    if (data.is_split && data.receivables.length > 0) {
+                        data.receivables.forEach(r => {
+                            editSplitList.appendChild(createSplitRow(r.person_name, r.amount));
+                        });
+                    } else if (data.is_split) {
+                        editSplitList.appendChild(createSplitRow());
+                    }
+
+                    openEditModal();
+                });
+            });
+            
+            editAddPersonBtn.addEventListener('click', () => {
+                editSplitList.appendChild(createSplitRow());
+            });
+            
+            editSplitToggle.addEventListener('change', () => {
+                  editSplitFields.classList.toggle('hidden', !editSplitToggle.checked);
+                  if (editSplitToggle.checked && editSplitList.children.length === 0) {
+                       editSplitList.appendChild(createSplitRow());
+                  } else if (!editSplitToggle.checked) {
+                       editSplitList.innerHTML = '';
+                  }
+            });
+            
+            cancelEditBtn.addEventListener('click', closeEditModal);
+
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) {
+                    closeEditModal();
+                }
+            });
+
+            deleteExpenseBtn.addEventListener('click', () => {
+                const expenseId = document.getElementById('edit-expense-id').value;
+                if (expenseId && confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+                    window.location.href = `/delete/${expenseId}`;
+                }
+            });
+
+            editExpenseForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const expenseId = document.getElementById('edit-expense-id').value;
+                const formData = new FormData(editExpenseForm);
+                
+                fetch(`/expense/edit/${expenseId}`, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    window.location.reload();
+                }).catch(error => {
+                    createFlashMessage('An error occurred while saving.', 'error');
+                });
+            });
+
+            // --- Outstanding Debts Dropdown ---
+            const debtsHeader = document.getElementById('debts-header');
+            const debtsListContainer = document.getElementById('debts-list-container');
+            const debtsArrow = document.getElementById('debts-arrow');
+            
+            if (debtsHeader) {
+                debtsHeader.addEventListener('click', () => {
+                    debtsListContainer.classList.toggle('hidden');
+                    debtsArrow.classList.toggle('rotate-180');
+                });
+            }
+
+            // --- Budget Modal Logic ---
+            const budgetModal = document.getElementById('budget-modal');
+            const budgetModalContent = document.getElementById('budget-modal-content');
+            const setBudgetBtn = document.getElementById('set-budget-btn');
+            const cancelBudgetBtn = document.getElementById('cancel-budget-btn');
+            const removeBudgetBtn = document.getElementById('remove-budget-btn');
+            const budgetForm = document.getElementById('budget-form');
+            const budgetAmountInput = document.getElementById('budget_amount');
+
+            function openBudgetModal() {
+                budgetModal.classList.remove('hidden');
+                setTimeout(() => {
+                    budgetModal.classList.remove('opacity-0');
+                    budgetModalContent.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+            function closeBudgetModal() {
+                budgetModalContent.classList.add('scale-95', 'opacity-0');
+                budgetModal.classList.add('opacity-0');
+                setTimeout(() => budgetModal.classList.add('hidden'), 300);
+            }
+
+            setBudgetBtn.addEventListener('click', openBudgetModal);
+            cancelBudgetBtn.addEventListener('click', closeBudgetModal);
+            budgetModal.addEventListener('click', (e) => {
+                if (e.target === budgetModal) closeBudgetModal();
+            });
+            
+            removeBudgetBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to remove your budget?')) {
+                    budgetAmountInput.value = 0;
+                    budgetForm.submit();
+                }
+            });
+
+            // --- Initial setup ---
+            renderTagList();
+            setInitialTag();
+
+            const staticFlashMessages = document.querySelectorAll('#flash-container > div');
+            staticFlashMessages.forEach(flashMessage => {
+                setTimeout(() => {
+                    flashMessage.classList.add('fade-out');
+                    setTimeout(() => flashMessage.remove(), 500);
+                }, 5000);
+            });
+        });
+        
+    </script>
+</body>
+</html>

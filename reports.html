@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Reports</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], },
+                    colors: {
+                        'theme-dark-bg': '#111827', 'theme-dark-surface': '#1f2937',
+                        'theme-violet': '#8b5cf6', 'theme-violet-hover': '#7c3aed',
+                        'theme-text-light': '#FFFFFF', 'theme-text-secondary': '#E5E7EB',
+                        'theme-border': '#374151',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            
+            background-image: url('/static/financial1.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+            position: relative;
+            z-index: 0; 
+            opacity:100;
+        }
+        
+        
+        body::before {
+            content: "";
+            position: fixed; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* Light theme overlay */
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
+            z-index: -1;
+            transition: background 0.3s ease-in-out;
+        }
+
+        
+        html.dark body::before {
+            background: linear-gradient(to right, rgba(91, 103, 129, 0.9), rgba(17, 24, 39, 0.6), rgba(114, 119, 128, 0.9));
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-black dark:bg-theme-dark-bg dark:text-theme-text-light transition-colors duration-300">
+    
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <nav class="flex justify-between items-center mb-8 bg-theme-violet p-4 rounded-xl shadow-lg">
+            <div class="flex items-center gap-8">
+                <a href="/dashboard" class="text-2xl font-extrabold text-white">Expense Tracker</a>
+                <div class="hidden md:flex items-center gap-4">
+                    <a href="/dashboard" class="text-white font-semibold py-2 px-3 rounded-lg hover:bg-white/30">Dashboard</a>
+                    <a href="/reports" class="text-white font-semibold py-2 px-3 rounded-lg bg-white/20 hover:bg-white/30">Reports</a>
+                    <button id="set-budget-btn" class="text-white font-semibold py-2 px-3 rounded-lg hover:bg-white/30">Set Budget</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hidden sm:inline text-theme-text-secondary text-sm">Welcome, <span class="font-semibold">{{ user }}</span>!</span>
+                <button id="theme-toggle" type="button" class="text-white hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/50 rounded-lg text-sm p-2.5">
+                    <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
+                    <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                </button>
+                <a href="/logout" class="bg-white text-theme-violet font-semibold py-2 px-5 rounded-lg hover:bg-gray-100 transition-transform transform hover:-translate-y-0.5">Logout</a>
+            </div>
+        </nav>
+
+        <main class="max-w-5xl mx-auto">
+            
+
+            <!-- Tabs -->
+            <div class="mb-8 border-b border-gray-200 dark:border-theme-border">
+                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg" data-tabs-target="#breakdown" type="button" role="tab" aria-selected="false">Breakdown</button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg" data-tabs-target="#comparison" type="button" role="tab" aria-selected="false">Comparison</button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div>
+                <!-- Breakdown Tab Content -->
+                <div class="hidden" id="breakdown" role="tabpanel">
+                    <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border mb-8">
+                        <h2 class="text-2xl font-semibold mb-4 text-black dark:text-theme-text-light">Budget Overview</h2>
+                        {% if budget_data.budget_obj %}
+                            <div class="flex justify-between items-baseline mb-2">
+                                <span class="font-semibold text-lg text-black dark:text-theme-text-light">₹{{ "%.2f"|format(budget_data.spent) }}</span>
+                                <span class="text-gray-500 dark:text-gray-400">of ₹{{ "%.2f"|format(budget_data.budget_obj.amount) }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-2">
+                                <div id="budget-progress-bar" class="bg-violet-600 h-2.5 rounded-full" data-percent="{{ budget_data.percent }}"></div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold {% if budget_data.remaining >= 0 %}text-green-500{% else %}text-red-500{% endif %}">
+                                    ₹{{ "%.2f"|format(budget_data.remaining|abs) }}
+                                </span>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">
+                                    {% if budget_data.remaining >= 0 %}left{% else %}over{% endif %} this {{ budget_data.budget_obj.period[:-2] }}
+                                </span>
+                            </div>
+                        {% else %}
+                            <p class="text-gray-500 dark:text-gray-400 text-center py-4">No budget set. Click "Set Budget" to get started.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                            <div class="lg:col-span-2" style="height: 500px;">
+                                 <canvas id="expenseChart"></canvas>
+                            </div>
+                            <div class="lg:col-span-1">
+                                <h2 class="text-2xl font-semibold mb-4 text-black dark:text-theme-text-light flex-shrink-0">Expense Breakdown</h2>
+                                <div id="expenseChartLegend" class="mt-4 space-y-2 flex-shrink-0"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Tab Content -->
+                <div class="hidden" id="comparison" role="tabpanel">
+                     <div class="bg-white dark:bg-theme-dark-surface p-6 rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <h2 class="text-2xl font-semibold mb-6 text-black dark:text-theme-text-light text-center">Compare Spending Periods</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                            <div>
+                                <h3 class="font-semibold text-lg mb-2 text-black dark:text-theme-text-light">Period 1</h3>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input type="date" id="p1-start" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" title="Period 1 Start Date">
+                                    <input type="date" id="p1-end" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" title="Period 1 End Date">
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg mb-2 text-black dark:text-theme-text-light">Period 2</h3>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input type="date" id="p2-start" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" title="Period 2 Start Date">
+                                    <input type="date" id="p2-end" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" title="Period 2 End Date">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button id="compare-btn" class="bg-theme-violet text-white py-2 px-8 rounded-md hover:bg-theme-violet-hover transition-colors">Compare</button>
+                        </div>
+                        <div id="comparison-results" class="mt-8">
+                            <!-- Results will be injected here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Set Budget Modal -->
+    <div id="budget-modal" class="hidden opacity-0 fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="budget-modal-content">
+            <h2 class="text-2xl font-semibold mb-6 text-black dark:text-theme-text-light">Set Your Budget</h2>
+            <form action="/set_budget" method="post" id="budget-form">
+                <div class="mb-4">
+                    <label for="budget_amount" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Budget Amount (₹)</label>
+                    <input type="number" id="budget_amount" name="budget_amount" step="0.01" placeholder="e.g., 5000.00" value="{{ budget_data.budget_obj.amount if budget_data.budget_obj else '' }}" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-black dark:text-theme-text-secondary">Period</label>
+                    <div class="mt-2 flex gap-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio text-theme-violet" name="budget_period" value="monthly" {% if not budget_data.budget_obj or budget_data.budget_obj.period == 'monthly' %}checked{% endif %}>
+                            <span class="ml-2">Monthly</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" class="form-radio text-theme-violet" name="budget_period" value="weekly" {% if budget_data.budget_obj and budget_data.budget_obj.period == 'weekly' %}checked{% endif %}>
+                            <span class="ml-2">Weekly</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mt-6">
+                    <button type="button" id="remove-budget-btn" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">Remove</button>
+                    <div class="flex gap-4">
+                        <button type="button" id="cancel-budget-btn" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
+                        <button type="submit" class="bg-theme-violet text-white py-2 px-4 rounded-md hover:bg-theme-violet-hover">Save Budget</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script id="chart-data" type="application/json">
+        {{ chart_data|tojson|safe }}
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // THEME TOGGLE SCRIPT
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+            const themeToggleButton = document.getElementById('theme-toggle');
+            const setTheme = (isDark) => {
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    themeToggleLightIcon.classList.remove('hidden');
+                    themeToggleDarkIcon.classList.add('hidden');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggleLightIcon.classList.add('hidden');
+                    themeToggleDarkIcon.classList.remove('hidden');
+                    localStorage.setItem('color-theme', 'light');
+                }
+            };
+            const savedTheme = localStorage.getItem('color-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                setTheme(true);
+            } else {
+                setTheme(false);
+            }
+            themeToggleButton.addEventListener('click', () => {
+                setTheme(!document.documentElement.classList.contains('dark'));
+            });
+
+            // --- TABBING SCRIPT ---
+            const tabs = document.querySelectorAll('[role="tab"]');
+            const tabContents = document.querySelectorAll('[role="tabpanel"]');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Deactivate all tabs
+                    tabs.forEach(t => {
+                        t.setAttribute('aria-selected', 'false');
+                        t.classList.remove('border-theme-violet', 'text-theme-violet', 'dark:text-theme-violet', 'dark:border-theme-violet');
+                        t.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300');
+                    });
+                    
+                    // Hide all tab panels
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    // Activate the clicked tab
+                    tab.setAttribute('aria-selected', 'true');
+                    tab.classList.add('border-theme-violet', 'text-theme-violet', 'dark:text-theme-violet', 'dark:border-theme-violet');
+                    tab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300');
+                    
+                    // Show the corresponding tab panel
+                    const target = document.querySelector(tab.dataset.tabsTarget);
+                    if (target) {
+                        target.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Set the first tab as active by default
+            if(tabs.length > 0) {
+                tabs[0].click();
+            }
+
+            // --- BREAKDOWN CHART SCRIPT ---
+            let chartData = {};
+            try {
+                const chartDataEl = document.getElementById('chart-data');
+                if (chartDataEl && chartDataEl.textContent.trim() !== "null") {
+                    chartData = JSON.parse(chartDataEl.textContent.trim());
+                }
+            } catch (e) { console.error("Could not parse chart data.", e); }
+
+            let expensePieChart = null;
+
+            const generateCustomLegend = (chart) => {
+                const legendContainer = document.getElementById('expenseChartLegend');
+                if (!legendContainer) return;
+                legendContainer.innerHTML = chart.data.labels.map((label, i) => {
+                    const ds = chart.data.datasets[0];
+                    const color = ds.backgroundColor[i];
+                    const meta = chart.getDatasetMeta(0);
+                    const isHidden = meta.data[i].hidden;
+                    return `<div class="flex items-center cursor-pointer text-sm" onclick="togglePieSlice(${i})"><span class="w-4 h-4 rounded mr-3 flex-shrink-0" style="background-color: ${color}"></span><span class="${isHidden ? 'line-through' : ''} text-neutral-800 dark:text-theme-text-secondary">${label}</span></div>`;
+                }).join('');
+            };
+            
+            window.togglePieSlice = (index) => {
+                if (expensePieChart) {
+                    const meta = expensePieChart.getDatasetMeta(0);
+                    meta.data[index].hidden = !meta.data[index].hidden;
+                    expensePieChart.update();
+                    generateCustomLegend(expensePieChart);
+                }
+            };
+
+            function generateExpenseChart() {
+                const ctx = document.getElementById('expenseChart');
+                if (!ctx) return;
+
+                if (!chartData || Object.keys(chartData).length === 0) {
+                    const container = ctx.closest('.bg-white');
+                    container.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-center text-gray-500 py-16">No expense data available to generate a report.</p></div>`;
+                    return;
+                }
+                
+                const labels = Object.keys(chartData).map(tag => `${tag.charAt(0).toUpperCase() + tag.slice(1)}: ₹${chartData[tag].toFixed(2)}`);
+                const data = Object.values(chartData);
+                const backgroundColors = ['#8b5cf6', 'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(255, 159, 64, 0.8)', 'rgba(199, 199, 199, 0.8)'];
+                
+                if (expensePieChart) expensePieChart.destroy();
+
+                expensePieChart = new Chart(ctx, {
+                    type: 'doughnut', 
+                    data: { labels, datasets: [{ label: 'Expenses', data, backgroundColor: backgroundColors, borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#FFFFFF', borderWidth: 2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                generateCustomLegend(expensePieChart);
+            }
+            
+            // --- COMPARISON SCRIPT ---
+            const compareBtn = document.getElementById('compare-btn');
+            const resultsContainer = document.getElementById('comparison-results');
+
+            compareBtn.addEventListener('click', async () => {
+                const p1_start = document.getElementById('p1-start').value;
+                const p1_end = document.getElementById('p1-end').value;
+                const p2_start = document.getElementById('p2-start').value;
+                const p2_end = document.getElementById('p2-end').value;
+
+                if (!p1_start || !p1_end || !p2_start || !p2_end) {
+                    resultsContainer.innerHTML = `<p class="text-red-500 text-center mt-4">Please select start and end dates for both periods.</p>`;
+                    return;
+                }
+                resultsContainer.innerHTML = `<p class="text-center mt-4">Loading comparison...</p>`;
+
+                try {
+                    const response = await fetch(`/get_comparison_data?p1_start=${p1_start}&p1_end=${p1_end}&p2_start=${p2_start}&p2_end=${p2_end}`);
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+
+                    const { period1, period2 } = data;
+                    const allTags = [...new Set([...Object.keys(period1.by_tag), ...Object.keys(period2.by_tag)])].sort();
+                    
+                    const tableRows = allTags.map(tag => {
+                        const p1_amount = period1.by_tag[tag] || 0;
+                        const p2_amount = period2.by_tag[tag] || 0;
+                        const difference = p2_amount - p1_amount;
+                        let diffClass = 'text-gray-500 dark:text-gray-400';
+                        let diffSign = '';
+                        if (difference > 0) { diffClass = 'text-red-500'; diffSign = '+'; }
+                        else if (difference < 0) { diffClass = 'text-green-500'; }
+                        
+                        return `<tr class="border-b dark:border-theme-border"><td class="px-3 py-4 font-semibold">${tag.charAt(0).toUpperCase() + tag.slice(1)}</td><td class="px-3 py-4">₹${p1_amount.toFixed(2)}</td><td class="px-3 py-4">₹${p2_amount.toFixed(2)}</td><td class="px-3 py-4 font-semibold ${diffClass}">${diffSign}₹${difference.toFixed(2)}</td></tr>`;
+                    }).join('');
+
+                    resultsContainer.innerHTML = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 my-8">
+                            <div class="bg-gray-50 dark:bg-theme-dark-bg p-6 rounded-lg text-center">
+                                <h4 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Period 1 Total</h4>
+                                <p class="text-3xl font-bold text-black dark:text-theme-text-light">₹${period1.total.toFixed(2)}</p>
+                                <p class="text-sm text-gray-500">${p1_start} to ${p1_end}</p>
+                            </div>
+                             <div class="bg-gray-50 dark:bg-theme-dark-bg p-6 rounded-lg text-center">
+                                <h4 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Period 2 Total</h4>
+                                <p class="text-3xl font-bold text-black dark:text-theme-text-light">₹${period2.total.toFixed(2)}</p>
+                                <p class="text-sm text-gray-500">${p2_start} to ${p2_end}</p>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4 text-black dark:text-theme-text-light">Breakdown by Tag</h3>
+                        <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-700 text-xs uppercase"><tr><th scope="col" class="px-3 py-3">Tag</th><th scope="col" class="px-3 py-3">Period 1</th><th scope="col" class="px-3 py-3">Period 2</th><th scope="col" class="px-3 py-3">Difference</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+                } catch(error) {
+                    resultsContainer.innerHTML = `<p class="text-red-500 text-center mt-4">Error: Could not fetch comparison data.</p>`;
+                    console.error('Comparison fetch error:', error);
+                }
+            });
+
+            // --- BUDGET MODAL SCRIPT ---
+            const budgetModal = document.getElementById('budget-modal');
+            const budgetModalContent = document.getElementById('budget-modal-content');
+            const setBudgetBtn = document.getElementById('set-budget-btn');
+            const cancelBudgetBtn = document.getElementById('cancel-budget-btn');
+            const removeBudgetBtn = document.getElementById('remove-budget-btn');
+            const budgetForm = document.getElementById('budget-form');
+            const budgetAmountInput = document.getElementById('budget_amount');
+
+            function openBudgetModal() {
+                budgetModal.classList.remove('hidden');
+                setTimeout(() => {
+                    budgetModal.classList.remove('opacity-0');
+                    budgetModalContent.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+            function closeBudgetModal() {
+                budgetModalContent.classList.add('scale-95', 'opacity-0');
+                budgetModal.classList.add('opacity-0');
+                setTimeout(() => budgetModal.classList.add('hidden'), 300);
+            }
+
+            setBudgetBtn.addEventListener('click', openBudgetModal);
+            cancelBudgetBtn.addEventListener('click', closeBudgetModal);
+            budgetModal.addEventListener('click', (e) => {
+                if (e.target === budgetModal) closeBudgetModal();
+            });
+            
+            removeBudgetBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to remove your budget?')) {
+                    budgetAmountInput.value = 0;
+                    budgetForm.submit();
+                }
+            });
+
+            // Set progress bar width
+            const progressBar = document.getElementById('budget-progress-bar');
+            if (progressBar) {
+                const percent = progressBar.getAttribute('data-percent');
+                progressBar.style.width = `${percent}%`;
+            }
+
+            generateExpenseChart();
+        });
+    </script>
+</body>
+</html>
+

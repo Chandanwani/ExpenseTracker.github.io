@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker | Simple Personal Finance Management</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        
+                        'theme-dark-bg': '#111827',      // Dark Charcoal
+                        'theme-dark-surface': '#1f2937',    // Lighter dark for cards
+                        'theme-violet': '#8b5cf6',        // Vibrant Violet accent
+                        'theme-violet-hover': '#7c3aed',  // Darker Violet for hover
+                        'theme-text-light': '#FFFFFF',      // Changed to pure white for dark mode
+                        'theme-text-secondary': '#E5E7EB',  // Lighter, less grey for secondary text
+                        'theme-border': '#374151',        // Subtle border color
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            
+            background-image: url('/static/image1.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+            position: relative;
+            z-index: 0; 
+            opacity:100;
+        }
+        
+        
+        body::before {
+            content: "";
+            position: fixed; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* Light theme overlay */
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
+            z-index: -1;
+            transition: background 0.3s ease-in-out;
+        }
+
+        
+        html.dark body::before {
+            background: linear-gradient(to right, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.9));
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-black dark:bg-theme-dark-bg dark:text-theme-text-light transition-colors duration-300">
+
+    <div class="homepage">
+        <div>
+            <div class="max-w-6xl mx-auto px-6 pt-6 pb-20 relative z-10">
+                <nav class="flex justify-between items-center mb-20 bg-theme-violet p-4 rounded-xl shadow-lg">
+                    <a href="#" class="text-2xl font-extrabold text-white">Expense Tracker</a>
+                    <div class="flex items-center gap-4">
+                        <a href="/login" class="bg-white text-theme-violet font-semibold py-2 px-5 rounded-lg hover:bg-gray-100 transition-transform transform hover:-translate-y-0.5">Login</a>
+                        <a href="/signup" class="bg-white text-theme-violet font-semibold py-2 px-5 rounded-lg hover:bg-gray-100 transition-transform transform hover:-translate-y-0.5">
+                            Sign Up
+                        </a>
+                        <button id="theme-toggle" type="button" class="text-white hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/50 rounded-lg text-sm p-2.5">
+                            <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
+                            <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                        </button>
+                    </div>
+                </nav>
+
+                <div class="text-center mb-12">
+                    <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-black dark:text-white">A smarter way <br>to manage your money</h1>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <ul class="list-none space-y-4 mb-4 text-lg">
+                            <li class="flex items-start"><span class="text-theme-violet mr-3">✔</span><span class="text-black-800 dark:text-theme-text-secondary"><strong class="text-black dark:text-theme-text-light">Total financial clarity.</strong> Track spending, create budgets, and visualize your financial habits.</span></li>
+                            <li class="flex items-start"><span class="text-theme-violet mr-3">✔</span><span class="text-black-800 dark:text-theme-text-secondary"><strong class="text-black dark:text-theme-text-light">Automated imports.</strong> Automatically import transactions by scanning your Google Pay statement.</span></li>
+                            <li class="flex items-start"><span class="text-theme-violet mr-3">✔</span><span class="text-black-800 dark:text-theme-text-secondary"><strong class="text-black dark:text-theme-text-light">Achieve your goals.</strong> Set and track savings goals for vacations, new gadgets, and more.</span></li>
+                        </ul>
+                    </div>
+                    <div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="py-20">
+            <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-black dark:text-theme-text-light">Features to Help You Succeed</h2>
+            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border transform transition-all duration-300 shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-2">
+                <div class="flex items-center gap-4 mb-3"><i class="fas fa-wallet text-2xl text-theme-violet"></i><h3 class="text-xl font-semibold text-black dark:text-theme-text-light">Track Your Spending</h3></div>
+                <p class="text-neutral-800 dark:text-theme-text-secondary mb-4 leading-relaxed">Effortlessly log every expense. Categorize your spending to get a clear, real-time view of your financial habits.</p>
+            </div>
+
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border transform transition-all duration-300 shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-2">
+                <div class="flex items-center gap-4 mb-3"><i class="fas fa-bullseye text-2xl text-theme-violet"></i><h3 class="text-xl font-semibold text-black dark:text-theme-text-light">Smart Budgeting</h3></div>
+                <p class="text-neutral-800 dark:text-theme-text-secondary mb-4 leading-relaxed">Set monthly or weekly budgets for categories. We'll notify you when you're getting close to your limit.</p>
+            </div>
+
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border transform transition-all duration-300 shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-2">
+                <div class="flex items-center gap-4 mb-3"><i class="fas fa-chart-pie text-2xl text-theme-violet"></i><h3 class="text-xl font-semibold text-black dark:text-theme-text-light">Visualize Your Finances</h3></div>
+                <p class="text-neutral-800 dark:text-theme-text-secondary mb-4 leading-relaxed">Transform data into easy-to-understand charts. Understand your financial patterns and make smarter decisions.</p>
+            </div>
+
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border transform transition-all duration-300 shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-2">
+                <div class="flex items-center gap-4 mb-3"><i class="fas fa-piggy-bank text-2xl text-theme-violet"></i><h3 class="text-xl font-semibold text-black dark:text-theme-text-light">Achieve Savings Goals</h3></div>
+                <p class="text-neutral-800 dark:text-theme-text-secondary mb-4 leading-relaxed">Planning a vacation or a new car? Create savings goals and track your progress to stay motivated.</p>
+            </div>
+
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border transform transition-all duration-300 shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-2">
+                <div class="flex items-center gap-4 mb-3"><i class="fab fa-google-pay text-2xl text-theme-violet"></i><h3 class="text-xl font-semibold text-black dark:text-theme-text-light">Smart GPay Import</h3></div>
+                <p class="text-neutral-800 dark:text-theme-text-secondary mb-4 leading-relaxed">Automatically import transactions by scanning your Google Pay statement and edit details for flawless records.</p>
+            </div>
+
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border transform transition-all duration-300 shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-2">
+                <div class="flex items-center gap-4 mb-3"><i class="fas fa-shield-alt text-2xl text-theme-violet"></i><h3 class="text-xl font-semibold text-black dark:text-theme-text-light">Secure & Synced</h3></div>
+                <p class="text-neutral-800 dark:text-theme-text-secondary mb-4 leading-relaxed">Your financial data is encrypted and secure. Access your tracker seamlessly on your phone, tablet, or desktop.</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+        <div class="py-20">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-black dark:text-theme-text-light">Frequently Asked Questions</h2>
+                </div>
+                <div class="space-y-4" id="faq-container">
+                    <div class="bg-white dark:bg-theme-dark-surface rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <button class="faq-question flex justify-between items-center w-full p-6 text-left">
+                            <h3 class="text-lg font-semibold text-black dark:text-theme-text-light">What is Expense Tracker?</h3>
+                            <i class="fas fa-chevron-down transition-transform text-neutral-600 dark:text-gray-400"></i>
+                        </button>
+                        <div class="faq-answer hidden p-6 pt-0">
+                            <p class="text-neutral-800 dark:text-theme-text-secondary">Expense Tracker is a personal finance app that helps you log expenses, create budgets, set savings goals, and visualize your spending habits, all in one simple platform.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-theme-dark-surface rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <button class="faq-question flex justify-between items-center w-full p-6 text-left">
+                            <h3 class="text-lg font-semibold text-black dark:text-theme-text-light">Is my financial data secure?</h3>
+                            <i class="fas fa-chevron-down transition-transform text-neutral-600 dark:text-gray-400"></i>
+                        </button>
+                        <div class="faq-answer hidden p-6 pt-0">
+                            <p class="text-neutral-800 dark:text-theme-text-secondary">Absolutely. We use bank-level encryption to ensure your data is always safe and private. Your security is our top priority.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-theme-dark-surface rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <button class="faq-question flex justify-between items-center w-full p-6 text-left">
+                            <h3 class="text-lg font-semibold text-black dark:text-theme-text-light">How does GPay Import work?</h3>
+                            <i class="fas fa-chevron-down transition-transform text-neutral-600 dark:text-gray-400"></i>
+                        </button>
+                        <div class="faq-answer hidden p-6 pt-0">
+                            <p class="text-neutral-800 dark:text-theme-text-secondary">Simply upload or scan your Google Pay statement, and our smart technology will automatically extract transaction data, saving you from manual entry.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-theme-dark-surface rounded-lg shadow-md border border-gray-200 dark:border-theme-border">
+                        <button class="faq-question flex justify-between items-center w-full p-6 text-left">
+                            <h3 class="text-lg font-semibold text-black dark:text-theme-text-light">How much does it cost?</h3>
+                            <i class="fas fa-chevron-down transition-transform text-neutral-600 dark:text-gray-400"></i>
+                        </button>
+                        <div class="faq-answer hidden p-6 pt-0">
+                            <p class="text-neutral-800 dark:text-theme-text-secondary">Expense Tracker is free to get started with core features. We also offer a Premium plan with advanced features like unlimited budgets and detailed reports.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="bg-gray-100 dark:bg-theme-dark-surface text-neutral-800 dark:text-theme-text-secondary py-16 border-t border-gray-200 dark:border-theme-border">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                    <div>
+                        <h3 class="text-black dark:text-theme-text-light font-semibold mb-4">Features</h3>
+                        <ul class="space-y-3">
+                            <li><a href="#" class="hover:text-theme-violet">Expense Tracking</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">Budgeting</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">Savings Goals</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">GPay Import</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-black dark:text-theme-text-light font-semibold mb-4">Resources</h3>
+                        <ul class="space-y-3">
+                            <li><a href="#" class="hover:text-theme-violet">Support Center</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">Blog</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">Privacy Policy</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">Terms of Service</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-black dark:text-theme-text-light font-semibold mb-4">Learn More</h3>
+                        <ul class="space-y-3">
+                            <li><a href="#" class="hover:text-theme-violet">About Us</a></li>
+                            <li><a href="#" class="hover:text-theme-violet">Careers</a></li>
+                        </ul>
+                        <div class="flex space-x-4 mt-6 text-xl">
+                            <a href="#" class="hover:text-theme-violet"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="hover:text-theme-violet"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="hover:text-theme-violet"><i class="fab fa-facebook"></i></a>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-black dark:text-theme-text-light font-semibold mb-4">Get Started</h3>
+                        <ul class="space-y-3">
+                            <li><a href="/signup" class="hover:text-theme-violet">Create a new account</a></li>
+                            <li><a href="/login" class="hover:text-theme-violet">Log in</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="text-center text-neutral-600 dark:text-gray-400 text-sm pt-8 border-t border-gray-200 dark:border-theme-border">
+                    <p>© 2025 Expense Tracker. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // FAQ Accordion Script 
+        const faqContainer = document.getElementById('faq-container');
+        if (faqContainer) {
+            const questions = faqContainer.getElementsByClassName('faq-question');
+            for (let question of questions) {
+                question.addEventListener('click', () => {
+                    const answer = question.nextElementSibling;
+                    const icon = question.querySelector('i');
+                    
+                    const allAnswers = faqContainer.querySelectorAll('.faq-answer');
+                    const allIcons = faqContainer.querySelectorAll('.faq-question i');
+                    allAnswers.forEach((ans, index) => {
+                        if(ans !== answer && !ans.classList.contains('hidden')) {
+                            ans.classList.add('hidden');
+                            allIcons[index].classList.remove('rotate-180');
+                        }
+                    });
+
+                    answer.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            }
+        }
+        
+        // NEW THEME TOGGLE SCRIPT
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleButton = document.getElementById('theme-toggle');
+
+        // Function to set theme
+        const setTheme = (isDark) => {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleLightIcon.classList.add('hidden');
+                themeToggleDarkIcon.classList.remove('hidden');
+                localStorage.setItem('color-theme', 'light');
+            }
+        };
+
+        // Check for saved theme preference on page load
+        const savedTheme = localStorage.getItem('color-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            setTheme(true);
+        } else {
+            setTheme(false);
+        }
+
+        
+        themeToggleButton.addEventListener('click', () => {
+            setTheme(!document.documentElement.classList.contains('dark'));
+        });
+    </script>
+
+</body>
+</html>

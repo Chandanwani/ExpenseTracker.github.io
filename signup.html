@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Expense Tracker</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'theme-dark-bg': '#111827',
+                        'theme-dark-surface': '#1f2937',
+                        'theme-violet': '#8b5cf6',
+                        'theme-violet-hover': '#7c3aed',
+                        'theme-text-light': '#FFFFFF',
+                        'theme-text-secondary': '#E5E7EB',
+                        'theme-border': '#374151',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        
+        body {
+            background-image: url('/static/image1.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+            position: relative;
+            z-index: 0; 
+        }
+        body::before {
+            content: "";
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
+            z-index: -1;
+            transition: background 0.3s ease-in-out;
+        }
+        html.dark body::before {
+            background: linear-gradient(to right, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 0.6), rgba(17, 24, 39, 0.9));
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-black dark:bg-theme-dark-bg dark:text-theme-text-light transition-colors duration-300">
+
+    <button id="theme-toggle" type="button" class="fixed top-4 right-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+        <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
+        <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+    </button>
+    
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-md relative z-10">
+            <div class="bg-white dark:bg-theme-dark-surface p-8 rounded-xl border border-gray-200 dark:border-theme-border shadow-lg shadow-violet-500/20">
+                <header class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-black dark:text-white">Create an Account</h1>
+                    <p class="text-neutral-800 dark:text-theme-text-secondary mt-2">Start tracking your expenses today!</p>
+                </header>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="p-4 mb-4 text-sm text-red-800 bg-red-100 rounded-lg dark:bg-red-900/50 dark:text-red-300" role="alert">
+                        {{ message }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <form action="/signup" method="post">
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Username</label>
+                        <input type="text" id="username" name="username" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm focus:outline-none focus:ring-theme-violet focus:border-theme-violet dark:placeholder-gray-400 dark:text-white" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="block text-sm font-medium text-black dark:text-theme-text-secondary">Password</label>
+                        <input type="password" id="password" name="password" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-theme-dark-surface border border-gray-300 dark:border-theme-border rounded-md shadow-sm focus:outline-none focus:ring-theme-violet focus:border-theme-violet dark:placeholder-gray-400 dark:text-white" required>
+                    </div>
+
+                    <div id="password-requirements" class="text-sm space-y-2 mb-6">
+                        <p class="flex items-center text-neutral-800 dark:text-theme-text-secondary"><span id="lowercase-icon" class="w-5 text-center mr-2"></span>At least one lowercase letter</p>
+                        <p class="flex items-center text-neutral-800 dark:text-theme-text-secondary"><span id="uppercase-icon" class="w-5 text-center mr-2"></span>At least one uppercase letter</p>
+                        <p class="flex items-center text-neutral-800 dark:text-theme-text-secondary"><span id="no-start-number-icon" class="w-5 text-center mr-2"></span>Doesn't start with a number</p>
+                    </div>
+
+                    <button type="submit" id="signup-button" class="w-full bg-theme-violet text-white py-2 px-4 rounded-md hover:bg-theme-violet-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-violet transition duration-150 ease-in-out disabled:bg-violet-300 dark:disabled:bg-violet-900/50 disabled:cursor-not-allowed" disabled>
+                        Sign Up
+                    </button>
+                </form>
+                <p class="text-center text-sm text-neutral-800 dark:text-theme-text-secondary mt-4">
+                    Already have an account? <a href="/login" class="font-medium text-theme-violet hover:text-theme-violet-hover">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleButton = document.getElementById('theme-toggle');
+
+        const setTheme = (isDark) => {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleLightIcon.classList.add('hidden');
+                themeToggleDarkIcon.classList.remove('hidden');
+                localStorage.setItem('color-theme', 'light');
+            }
+        };
+
+        const savedTheme = localStorage.getItem('color-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            setTheme(true);
+        } else {
+            setTheme(false);
+        }
+
+        themeToggleButton.addEventListener('click', () => {
+            setTheme(!document.documentElement.classList.contains('dark'));
+        });
+
+        // PRESERVED: Password validation script
+        const passwordInput = document.getElementById('password');
+        const icons = {
+            lowercase: document.getElementById('lowercase-icon'),
+            uppercase: document.getElementById('uppercase-icon'),
+            noStartNumber: document.getElementById('no-start-number-icon')
+        };
+        const signupButton = document.getElementById('signup-button');
+        const validIcon = '✅';
+        const invalidIcon = '❌';
+
+        Object.values(icons).forEach(icon => icon.textContent = invalidIcon);
+
+        passwordInput.addEventListener('input', () => {
+            const value = passwordInput.value;
+            const hasLowercase = /[a-z]/.test(value);
+            const hasUppercase = /[A-Z]/.test(value);
+            const noStartNumber = !/^\d/.test(value) && value.length > 0;
+            
+            icons.lowercase.textContent = hasLowercase ? validIcon : invalidIcon;
+            icons.uppercase.textContent = hasUppercase ? validIcon : invalidIcon;
+            icons.noStartNumber.textContent = noStartNumber ? validIcon : invalidIcon;
+            
+            signupButton.disabled = !(hasLowercase && hasUppercase && noStartNumber);
+        });
+    </script>
+</body>
+</html>
